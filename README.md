@@ -21,6 +21,7 @@ pip3 install -r requirements.txt
 cd src
 python3 app.py
 ```
+
 Browser: URL = 
 - `http://localhost:5000/api/v1/details`
 - `http://localhost:5000/api/v1/healthz`
@@ -44,10 +45,14 @@ docker push janhaans/python-app:v1.0.0
 docker run -d -p 8080:5000 --name app janhaans/python-app:v1.0.0
 ```
 
+Browser: URL = 
+- `http://localhost:8080/api/v1/details`
+- `http://localhost:8080/api/v1/healthz`
+
 ## Create kubernetes cluster (kind)
 See [kind - quick-start](https://kind.sigs.k8s.io/docs/user/quick-start/#installing-from-release-binaries) for installation instructions
 
-The kind cluster has:
+The kind kubernetes cluster has:
 - one control-plane node with extraPortMappings:
     - host port 80 mapped to control-plane container port 80
     - host port 443 mapped to control-plane container port 443
@@ -55,14 +60,68 @@ The kind cluster has:
 
 The configuration of the kind cluster is specified in file [kind-config.yaml](./kind-config.yaml)
 
-Creat the kind cluster:
+Create a kubernetes cluster with kind:
 ```
-kind create cluste --config kind-config.yaml
+kind create cluster --config kind-config.yaml
 ```
 
-Next the **NGINX Ingress Controller** should be deployed on the kind cluster to make deployed service available. The NGINX Ingress Controller project maintains a specific manifest for deployment on kind clusters.
+Do a check if the cluster nodes are running
+```
+kubectl get nodes
+```
 
+## Run program `cloud-provider-kind`
+
+First install this application with go:
 ```
-kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/kind/deploy.yaml
+go install sigs.k8s.io/cloud-provider-kind@latest
 ```
+
+If go is not installed on Ubuntu, then install go before you install the application with go:
+```
+sudo snap install --classic go
+```
+When `cloud-provider-kind` has been installed, then run the program:
+```
+~/go/bin/cloud-provider-kind
+```
+
+This application will create ingress controller with name `cloud-provider-kind` and controller `kind.sigs.k8s.io/ingress-controller` (see `kubect get ingressclass`).
+When this application is running you can also create a Service of type Loadbalancer (see [kind - loadbalancer](https://kind.sigs.k8s.io/docs/user/loadbalancer/))
+
+
+## Deploy python-app on Kubernetes
+Apply the Kubernetes manifests file `k8s/python-app.yaml` that deploy `python-app`, expose it as a ClusterIP service, and make it reachable through the `cloud-provider-kind` ingress controller:
+```
+kubectl apply -f k8s/python-app.yaml
+```
+
+Wait until the controller reports that the pods are ready:
+```
+kubectl wait --namespace python-app \
+  --for=condition=ready pod \
+  --selector=app=python-app \
+  --timeout=90s
+```
+
+Inspect the deployment, service, pods and ingress to confirm these kubernetes resources exist:
+```
+kubectl get all -n python-app
+kubectl get ingress -n python-app
+```
+
+The latest command will show the IP address that can be used from the host to access the application.
+
+Browser: URL = 
+- `http://<IP>/api/v1/details`
+- `http://<IP>/api/v1/healthz`
+
+Another option to access application `python-app` and bypass the ingress controller is port-forwarding
+```
+kubectl port-forward -n python-app service/python-app 8080
+```
+
+Browser: URL = 
+- `http://localhost:8080/api/v1/details`
+- `http://localhost:8080/api/v1/healthz`
 
