@@ -4,9 +4,6 @@ redis-ha:
 controller:
   replicas: 1
 
-server:
-  replicas: 1
-
 repoServer:
   replicas: 1
 
@@ -20,10 +17,18 @@ certificate:
   enabled: true
 
 server:
+  replicas: 1
+  service:
+    # Change the service type to LoadBalancer
+    type: LoadBalancer
+    # Optional: specify a fixed port if needed, though default is 80/443
+    # servicePortHttp: 80
+    # servicePortHttps: 443
+
   ingress:
-    enabled: true
-    ingressClassName: cloud-provider-kind
-    tls: true
-    annotations:
-      nginx.ingress.kubernetes.io/ssl-passthrough: "true"
-      nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+    # Ensure Ingress is disabled
+    enabled: false
+
+# If you want to access the UI via HTTPS without certificate warnings, 
+# you might need to handle TLS. By default, Argo CD generates 
+# self-signed certs.

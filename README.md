@@ -91,6 +91,33 @@ This application will create ingress controller with name `cloud-provider-kind` 
 When this application is running you can also create a Service of type Loadbalancer (see [kind - loadbalancer](https://kind.sigs.k8s.io/docs/user/loadbalancer/))
 
 
+## Install Argo CD on kind
+Install the official Argo CD Helm chart with the custom values provided in [`helm/argocd/values.yaml`](helm/argocd/values.yaml). These values keep the components at a single replica on kind, disable Redis HA, and configure the `argocd-server` service as a LoadBalancer so the `cloud-provider-kind` process can assign it an IP.
+
+```
+helm repo add argo https://argoproj.github.io/argo-helm
+helm repo update
+helm upgrade --install argocd argo/argo-cd \
+  --namespace argocd \
+  --create-namespace \
+  -f helm/argocd/values.yaml
+```
+
+Wait for the pods to become ready:
+```
+kubectl wait -n argocd --for=condition=ready pod --all --timeout=120s
+```
+
+List the LoadBalancer service to grab the external IP assigned by `cloud-provider-kind`:
+```
+kubectl get svc -n argocd argocd-server
+```
+
+Use that address to open the Argo CD UI. Retrieve the initial admin password with:
+```
+kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d && echo
+```
+
 ## Deploy python-app on Kubernetes
 Apply the Kubernetes manifests file `k8s/python-app.yaml` that deploy `python-app`, expose it as a ClusterIP service, and make it reachable through the `cloud-provider-kind` ingress controller:
 ```
