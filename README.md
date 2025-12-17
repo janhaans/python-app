@@ -49,30 +49,7 @@ Browser: URL =
 - `http://localhost:8080/api/v1/details`
 - `http://localhost:8080/api/v1/healthz`
 
-## Deploy python-app with Helm
-Instead of applying the raw manifest, use the Helm chart in [`helm/python-app`](helm/python-app) which packages the same Deployment, Service, and Ingress resources and defaults to the `cloud-provider-kind` ingress class.
 
-Install or upgrade the release into the `python-app` namespace (Helm will create it when the flag is used):
-```
-helm upgrade --install python-app helm/python-app \
-  --namespace python-app \
-  --create-namespace
-```
-
-The defaults roll out two replicas of the `janhaans/python-app:v1.0.4` image, expose the service on port 8080 (targeting container port 5000), and create an ingress that serves `/`. After installation, wait for the pods to become ready and check the ingress IP that `cloud-provider-kind` assigns:
-```
-kubectl wait --namespace python-app \
-  --for=condition=ready pod \
-  --selector=app.kubernetes.io/name=python-app \
-  --timeout=90s
-kubectl get ingress -n python-app
-```
-
-Use the reported address to reach the application (or port-forward the service as shown above):
-```
-curl http://<IP>/api/v1/healthz
-curl http://<IP>/api/v1/details
-```
 ## Create kubernetes cluster (kind)
 See [kind - quick-start](https://kind.sigs.k8s.io/docs/user/quick-start/#installing-from-release-binaries) for installation instructions
 
@@ -148,3 +125,50 @@ kubectl port-forward -n python-app service/python-app 8080
 Browser: URL = 
 - `http://localhost:8080/api/v1/details`
 - `http://localhost:8080/api/v1/healthz`
+
+
+## Delete python-app from Kubernetes
+```
+kubectl delete -f k8s/python-app
+```
+
+## Deploy python-app with Helm
+
+Install Helm on Ubuntu 25:
+```
+sudo snap install --classic helm
+```
+
+Instead of applying the raw manifest, use the Helm chart in [`helm/python-app`](helm/python-app) which packages the same Deployment, Service, and Ingress resources and defaults to the `cloud-provider-kind` ingress class.
+
+Install or upgrade the release into the `python-app` namespace (Helm will create it when the flag is used):
+```
+helm install python-app helm/python-app \
+  --namespace python-app \
+  --create-namespace
+```
+
+Get the status of the Helm release:
+```
+helm status list -n python-app
+```
+
+The defaults roll out two replicas of the `janhaans/python-app:v1.0.4` image, expose the service on port 8080 (targeting container port 5000), and create an ingress that serves `/`. After installation, wait for the pods to become ready and check the ingress IP that `cloud-provider-kind` assigns:
+```
+kubectl wait --namespace python-app \
+  --for=condition=ready pod \
+  --selector=app.kubernetes.io/name=python-app \
+  --timeout=90s
+kubectl get ingress -n python-app
+```
+
+Use the reported address to reach the application (or port-forward the service as shown above):
+```
+curl http://<IP>/api/v1/healthz
+curl http://<IP>/api/v1/details
+```
+
+## Delete python-app with Helm
+```
+helm uninstall python-app -n python-app
+```
