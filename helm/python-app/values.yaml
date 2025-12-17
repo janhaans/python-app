@@ -1,0 +1,39 @@
+replicaCount: 2
+
+image:
+  repository: janhaans/python-app
+  tag: v1.0.4
+  pullPolicy: Always
+
+service:
+  type: ClusterIP
+  port: 8080
+  targetPort: 5000
+
+containerPort: 5000
+
+readinessProbe:
+  path: /api/v1/healthz
+  initialDelaySeconds: 5
+  periodSeconds: 10
+
+livenessProbe:
+  path: /api/v1/healthz
+  initialDelaySeconds: 15
+  periodSeconds: 20
+
+ingress:
+  enabled: true
+  ingressClassName: cloud-provider-kind
+  annotations: {}
+  path: /
+  pathType: Prefix
+  host: ""
+
+resources: {}
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
