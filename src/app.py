@@ -8,7 +8,8 @@ app = Flask(__name__)
 def details():
     return {
         'hostname': socket.gethostname(),
-        'time': datetime.now().isoformat()
+        'time': datetime.now().isoformat(),
+        'message': 'hello'
     }
 
 @app.route('/api/v1/healthz', methods=['GET'])
