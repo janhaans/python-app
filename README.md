@@ -196,7 +196,98 @@ List the LoadBalancer service to grab the external IP assigned by `cloud-provide
 kubectl get svc -n argocd argocd-server
 ```
 
-Use that address to open the Argo CD UI. Retrieve the initial admin password with:
+In file `/etc/hosts` assign this IP address to domain `argocd.example.com` (see [values.yaml](helm/argocd/values.yaml)):
+```
+<IP> argocd.example.com
+```   
+
+Use that domain to open the Argo CD UI. 
+
+Browser: URL = 
+- `http://argocd.example.com`
+
+Retrieve the initial admin password with:
 ```
 kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d && echo
 ```
+
+## Configure ArgoCD Application for python-app
+
+After accessing the ArgoCD UI at `https://argocd.example.com`, configure an Application to automatically deploy the python-app using the Helm chart from this GitHub repository.
+
+### Step 1: Login to ArgoCD UI
+1. Open browser and navigate to `https://argocd.example.com`
+2. Login with:
+   - **Username**: `admin`
+   - **Password**: Use the command above to retrieve the initial password
+
+### Step 2: Configure Repository Access (if needed)
+
+**For Public Repositories**: No additional configuration needed - ArgoCD can directly access public GitHub repositories.
+
+**For Private Repositories**: Configure repository credentials first:
+1. In ArgoCD UI, go to **Settings** → **Repositories**
+2. Click **"CONNECT REPO"**
+3. Fill in:
+   - **Type**: `git`
+   - **Repository URL**: `https://github.com/janhaans/python-app.git`
+   - **Username**: Your GitHub username
+   - **Password**: GitHub Personal Access Token (PAT) with repo access
+4. Click **"CONNECT"** to test and save
+
+### Step 3: Create New Application
+1. Click **"+ NEW APP"** button in the ArgoCD UI
+2. Fill in the **General** section:
+   - **Application Name**: `python-app`
+   - **Project Name**: `default`
+   - **Sync Policy**: `Manual` (or `Automatic` for auto-sync)
+
+### Step 4: Configure Source Repository
+In the **Source** section:
+- **Repository URL**: `https://github.com/janhaans/python-app.git`
+- **Revision**: `HEAD` (or specify branch like `main`)
+- **Path**: `helm/python-app`
+
+### Step 5: Configure Destination
+In the **Destination** section:
+- **Cluster URL**: `https://kubernetes.default.svc` (in-cluster)
+- **Namespace**: `python-app`
+
+### Step 6: Configure Helm Parameters (Optional)
+In the **Helm** section, you can override default values:
+- **Values Files**: Leave default or specify custom values
+- **Parameters**: Add any custom Helm values if needed, for example:
+  - `image.tag`: `latest` (to use latest image)
+  - `replicaCount`: `3` (to override replica count)
+
+### Step 7: Create and Sync Application
+1. Click **"CREATE"** to create the application
+2. The application will appear in "OutOfSync" status
+3. Click on the application name to view details
+4. Click **"SYNC"** button to deploy the application
+5. Optionally click **"SYNC OPTIONS"** → **"REPLACE"** for force sync
+
+### Step 8: Verify Deployment
+After successful sync:
+1. Check ArgoCD shows green "Synced" and "Healthy" status
+2. Verify pods are running:
+   ```
+   kubectl get pods -n python-app
+   kubectl get ingress -n python-app
+   ```
+3. Access the application:
+   ```
+   curl http://<INGRESS-IP>/api/v1/healthz
+   curl http://<INGRESS-IP>/api/v1/details
+   ```
+
+### Auto-Sync Configuration (Optional)
+To enable automatic synchronization when GitHub repository changes:
+1. In ArgoCD UI, click on the `python-app` application
+2. Click **"APP DETAILS"** → **"EDIT"**
+3. Under **Sync Policy**, select **"AUTOMATIC"**
+4. Enable **"PRUNE RESOURCES"** and **"SELF HEAL"** for complete GitOps workflow
+5. Click **"SAVE"**
+
+Now ArgoCD will automatically detect changes to the Helm chart in your GitHub repository and deploy updates to the kind cluster.
+
