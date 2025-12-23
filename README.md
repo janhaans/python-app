@@ -390,7 +390,7 @@ helm install "${INSTALLATION_NAME}" \
 
 ```
 
-#### Verification
+#### Verify Installation
 
 ```
 helm list -A
@@ -417,3 +417,9 @@ NAME                                     READY   STATUS    RESTARTS   AGE
 arc-gha-rs-controller-645dfd698b-tbbjp   1/1     Running   0          55m
 arc-runner-set-754b578d-listener         1/1     Running   0          40m
 ```
+
+### Test
+
+When configuring the Runner Scale Set an [GitHub Actions test workflow](.github/workflow/test-runner.yml) has been created.
+
+Test this workflow

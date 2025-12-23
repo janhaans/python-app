@@ -1,14 +1,13 @@
-name: Build and push python-app image
+name: Build, push python-app image and deploy application to kind cluster
 
 on:
   push:
     branches:
       - main
-      - ci
     paths:
-      - 'src/**'
-      - 'Dockerfile'
-      - '.github/workflows/docker-build-push.yml'
+      - "src/**"
+      - "Dockerfile"
+      - ".github/workflows/cicd.yml"
 
 env:
   IMAGE_NAME: janhaans/python-app
