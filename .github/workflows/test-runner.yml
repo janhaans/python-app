@@ -1,0 +1,13 @@
+name: Test ARC Runner
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: arc-runner-set
+    steps:
+      - name: Test runner
+        run: |
+          echo "Hello from ARC runner!"
+          kubectl get nodes
