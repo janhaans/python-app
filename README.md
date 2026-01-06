@@ -423,3 +423,9 @@ arc-runner-set-754b578d-listener         1/1     Running   0          40m
 When configuring the Runner Scale Set an [GitHub Actions test workflow](.github/workflow/test-runner.yml) has been created.
 
 Before testing the workflow give the runner service account the permissions to access Kubernetes API
+
+```
+kubectl apply -f k8s/runner-rbac.yaml
+```
+
+Manually trigger `Test ARC Runner` workflow in Github Actions.
