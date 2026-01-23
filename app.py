@@ -7,7 +7,7 @@ app = Flask(__name__)
 @app.route('/api/v1/details', methods=['GET'])
 def details():
     return {
-        'hostname': socket.gethostname(),
+        'message': 'Hello, World!',
         'time': datetime.now().isoformat()
     }
 
@@ -16,4 +16,4 @@ def healthz():
     return {'status': 'up'}
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=8080)
